@@ -6,7 +6,7 @@ ExposureFusion::ExposureFusion(char* seqPath)  // 构造函数
 	this->m_state = 0;
 	this->m_nframes = 0;
 
-	// 读取文件列表
+	// Read file list
 	string format = std::string(".jpg");  // .jpg .png
 	vector<string> img_paths;
 	int N_files = this->get_files_format(seqPath, format, img_paths);
@@ -22,9 +22,13 @@ ExposureFusion::ExposureFusion(char* seqPath)  // 构造函数
 	else
 	{
 		printf("[Warning]: non valid images found!\n");
-		this->m_state = -1;
+		this->m_state = -1;  // set state
 		std::exit(-1);
 	}
+
+	// 预先分配内存
+	this->m_inputImages.reserve(this->m_nframes);
+	this->m_inputGrayImages.reserve(this->m_nframes);
 
 	for (int n = 0; n < m_nframes; n++)
 	{
