@@ -3,12 +3,28 @@
 
 ExposureFusion::ExposureFusion(char* seqPath)  // 构造函数
 {
+	this->m_state = 0;
+	this->m_nframes = 0;
+
 	// 读取文件列表
-	const string format = std::string(".jpg");  // .jpg .png
+	string format = std::string(".jpg");  // .jpg .png
 	vector<string> img_paths;
-	const int N_files = this->get_files_format(seqPath, format, img_paths);
-	this->m_nframes = N_files;
-	printf("Total %d image files.\n", this->m_nframes);
+	int N_files = this->get_files_format(seqPath, format, img_paths);
+
+	format = std::string(".png");
+	N_files = this->get_files_format(seqPath, format, img_paths);
+	this->m_nframes = img_paths.size();
+
+	if (this->m_nframes > 0)
+	{
+		printf("Total %d image files.\n", this->m_nframes);
+	}
+	else
+	{
+		printf("[Warning]: non valid images found!\n");
+		this->m_state = -1;
+		std::exit(-1);
+	}
 
 	for (int n = 0; n < m_nframes; n++)
 	{
@@ -16,7 +32,7 @@ ExposureFusion::ExposureFusion(char* seqPath)  // 构造函数
 
 		if (!input_img.data)
 		{
-			cout << "fail to read image" << endl;
+			printf("[Err]: Failed to read in image!\n");
 			std::exit(-1);
 		}
 
@@ -37,9 +53,9 @@ ExposureFusion::ExposureFusion(char* seqPath)  // 构造函数
 		}
 
 		Mat gray(input_img.size(), CV_8UC1);
-		cvtColor(input_img, gray, CV_BGR2GRAY);
-		m_inputImages.push_back(input_img);
-		m_inputGrayImages.push_back(gray);
+		cv::cvtColor(input_img, gray, CV_BGR2GRAY);
+		this->m_inputImages.push_back(input_img);
+		this->m_inputGrayImages.push_back(gray);
 	}
 
 	std::cout << "finish to read Image Sequence " << endl;
@@ -88,7 +104,6 @@ void ExposureFusion::QualityMeasuresProcessing()
 	// ---------
 	for (int nfrm = 0; nfrm < m_nframes; nfrm++)
 	{
-		system("cls");
 		cout << "Quality measure processing - Frame number: " << nfrm + 1;
 
 		QualityMeasures* qm = new QualityMeasures(m_inputImages[nfrm].clone(), m_inputGrayImages[nfrm].clone());

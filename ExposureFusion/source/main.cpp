@@ -13,15 +13,20 @@ int main(void)
 
 	const char* res_path = "./res/";
 	char res_f_name[256];
-	//FILE* fp = fopen("eftime.txt", "at");
-	for (int i = 1; i <= 5; i++)
+	for (int i = 1; i <= 15; i++)
 	{
+		printf("Start processing seq %d...\n", i);
 		sprintf(seq_top_path, "%s%d", seq_path, i);
 
 		time_t tok, tic = clock();
 
 		// ----------
 		ExposureFusion EF(seq_top_path);
+		if (EF.getState() < 0)
+		{
+			continue;
+		}
+
 		EF.QualityMeasuresProcessing();
 		cout << "finish to QualityMeasuresProcessing" << endl;
 		EF.FusionProcessing();
@@ -31,11 +36,13 @@ int main(void)
 		tok = clock();
 		cout << endl << "total processing time : " 
 			<< (float)(tok - tic) / CLOCKS_PER_SEC << "s" << endl;
-		//fprintf(fp, "%.2f\n", (float)(tok - tic) / CLOCKS_PER_SEC);		
 
 		// show result
-		cv::imshow("ExposureFusion HDR", EF.getResultImage());
+		char win_name[60];
+		sprintf(win_name, "Exposure Fusion HDR %d", i);
+		cv::imshow(win_name, EF.getResultImage());
 		cv::waitKey();
+		cv::destroyWindow(win_name);
 
 		/*sprintf(res_f_name, "%s\\EF_%d.bmp", res_path, i);
 		if (!EF.SaveImageBMP(res_f_name))
@@ -43,9 +50,10 @@ int main(void)
 			cout << "fail to save result image" << endl;
 			return -1;
 		}*/
-		//waitKey();
+
+		printf("End processing seq %d.\n\n", i);
+		//system("cls");
 	}
-	//fclose(fp);
 
 	return 0;
 }
