@@ -337,12 +337,12 @@ Mat ExposureFusion::setResultByPyramid(int nch)
 	return result;
 }
 
-bool ExposureFusion::SaveImageBMP(const char* filename)
+bool ExposureFusion::SaveImageBMP(const char* filePath)
 {
-	if (!strcmp(".bmp", &filename[strlen(filename) - 4]))
+	if (!strcmp(".bmp", &filePath[strlen(filePath) - 4]))
 	{
 		FILE* pFile = NULL;
-		fopen_s(&pFile, filename, "wb");
+		pFile = std::fopen(filePath, "wb");  // using std for linux compiling
 		if (!pFile)
 		{
 			return false;

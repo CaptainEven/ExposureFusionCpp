@@ -6,7 +6,8 @@ using namespace std;
 using namespace cv;
 
 
-int main(void)
+// TODO: 做成命令行工具
+int main()
 {
 	const char* seq_path = "./data/";
 	char seq_top_path[256];
