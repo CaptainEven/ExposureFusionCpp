@@ -12,7 +12,7 @@ int main(void)
 	char seq_top_path[256];
 
 	const char* res_path = "./res/";
-	char res_f_name[256];
+	//char res_f_name[256];
 	for (int i = 1; i <= 15; i++)
 	{
 		printf("Start processing seq %d...\n", i);

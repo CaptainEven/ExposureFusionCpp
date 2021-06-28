@@ -84,6 +84,7 @@ public:
 	void QualityMeasuresProcessing(void);
 	// m_nframes weight map;
 
+	// 处理过程
 	bool SaveImageBMP(const char* filename);
 
 	void FusionProcessing(void);
@@ -92,6 +93,7 @@ public:
 
 	Mat setResultByPyramid(int nch);
 
+	// 返回查询结果
 	inline const cv::Mat& getResultImage()
 	{
 		return this->m_resultImage;

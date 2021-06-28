@@ -13,7 +13,7 @@ ExposureFusion::ExposureFusion(char* seqPath)  // 构造函数
 
 	format = std::string(".png");
 	N_files = this->get_files_format(seqPath, format, img_paths);
-	this->m_nframes = img_paths.size();
+	this->m_nframes = (int)img_paths.size();
 
 	if (this->m_nframes > 0)
 	{
@@ -45,10 +45,10 @@ ExposureFusion::ExposureFusion(char* seqPath)  // 构造函数
 		{
 			do
 			{
-				Size sz(input_img.cols*0.5, input_img.rows*0.5);
+				Size sz(int(input_img.cols*0.5), int(input_img.rows*0.5));
 				if ((int)(input_img.cols*0.5) % BLOCKCOLS == 0 || (int)(input_img.rows*0.5) % BLOCKROWS == 0)
 				{
-					sz = Size(input_img.cols*0.5 + 1, input_img.cols*0.5 + 1);
+					sz = Size(int(input_img.cols*0.5 + 1), int(input_img.cols*0.5 + 1));
 				}
 
 				// do resizing 
@@ -64,6 +64,7 @@ ExposureFusion::ExposureFusion(char* seqPath)  // 构造函数
 
 	std::cout << "finish to read Image Sequence " << endl;
 }
+
 
 const int ExposureFusion::get_files_format(const string & path, const string & format, vector<string>& files)
 {
@@ -266,7 +267,7 @@ Mat ExposureFusion::setResultByPyramid(int nch)
 					pix += gaussianWeightMapPyramid[nfrm][l].at<uchar>(y, x) * laplacianImagePyramid[nfrm][l].at<char>(y, x);
 				}
 
-				laplacianResult.at<int>(y, x) = pix / 255;
+				laplacianResult.at<int>(y, x) = int(pix / 255.0f);
 			}
 		}
 
@@ -343,7 +344,9 @@ bool ExposureFusion::SaveImageBMP(const char* filename)
 		FILE* pFile = NULL;
 		fopen_s(&pFile, filename, "wb");
 		if (!pFile)
+		{
 			return false;
+		}
 
 		int m_nChannels = m_resultImage.channels();
 		int m_nHeight = m_resultImage.rows;
@@ -357,7 +360,7 @@ bool ExposureFusion::SaveImageBMP(const char* filename)
 		fileHeader.bfReserved2 = 0;
 		fileHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + (m_nChannels == 1) * 256 * sizeof(RGBQUAD);
 
-		fwrite(&fileHeader, sizeof(BITMAPFILEHEADER), 1, pFile);
+		std::fwrite(&fileHeader, sizeof(BITMAPFILEHEADER), 1, pFile);
 
 		BITMAPINFOHEADER infoHeader;
 		infoHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -372,24 +375,24 @@ bool ExposureFusion::SaveImageBMP(const char* filename)
 		infoHeader.biXPelsPerMeter = 0;
 		infoHeader.biYPelsPerMeter = 0;
 
-		fwrite(&infoHeader, sizeof(BITMAPINFOHEADER), 1, pFile);
+		std::fwrite(&infoHeader, sizeof(BITMAPINFOHEADER), 1, pFile);
 
 		if (m_nChannels == 1)
 		{
 			for (int l = 0; l < 256; l++)
 			{
-				RGBQUAD GrayPalette = { l, l, l, 0 };
-				fwrite(&GrayPalette, sizeof(RGBQUAD), 1, pFile);
+				RGBQUAD GrayPalette = { byte(l), byte(l), byte(l), 0 };
+				std::fwrite(&GrayPalette, sizeof(RGBQUAD), 1, pFile);
 			}
 		}
 
 		int r;
 		for (r = m_nHeight - 1; r >= 0; r--)
 		{
-			fwrite(&m_resultImage.data[r*m_nWStep], sizeof(BYTE), m_nWStep, pFile);
+			std::fwrite(&m_resultImage.data[r*m_nWStep], sizeof(BYTE), m_nWStep, pFile);
 		}
 
-		fclose(pFile);
+		std::fclose(pFile);
 		return true;
 	}
 	else
