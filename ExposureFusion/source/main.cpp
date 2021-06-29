@@ -52,7 +52,6 @@ int main()
 			return -1;
 		}
 		printf("%s saved.\n", res_f_path);
-
 		printf("End processing seq %d.\n\n", i);
 		//system("cls");
 	}
