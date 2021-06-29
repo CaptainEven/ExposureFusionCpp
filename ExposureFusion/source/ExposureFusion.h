@@ -47,15 +47,35 @@ public:
 #endif
 	}
 
-	Mat getContrastMeasure(Mat src);
-	Mat getSaturationMeasure(Mat src);
-	Mat getWellExposednessMeasure(Mat src);
+	Mat getContrastMeasure(const Mat& src);
+	Mat getSaturationMeasure(const Mat& src);
+	Mat getWellExposednessMeasure(const Mat& src);
 	Mat getWeightMapImage();
-	Mat getterContrast() { return Contrast.clone(); }
-	Mat getterSaturation() { return Saturation.clone(); }
-	Mat getterWellExposedness() { return WellExposedness.clone(); }
-	Mat getterWeightMap() { return WeightMap.clone(); }
-	Mat getterWeightMapColor(int nch) { return WeightMapColor[nch].clone(); }
+
+	inline Mat getterContrast() 
+	{
+		return Contrast.clone();
+	}
+
+	inline Mat getterSaturation() 
+	{
+		return Saturation.clone();
+	}
+
+	inline Mat getterWellExposedness()
+	{
+		return WellExposedness.clone();
+	}
+
+	inline Mat getterWeightMap()
+	{
+		return WeightMap.clone();
+	}
+
+	inline Mat getterWeightMapColor(const int nch)
+	{
+		return WeightMapColor[nch].clone();
+	}
 };
 
 
@@ -64,10 +84,10 @@ class ExposureFusion
 private:
 	vector<Mat> m_inputImages;
 	vector<Mat> m_inputGrayImages;
-	vector<Mat> m_WeightMaps;
-	vector<vector<Mat>> m_WeightMapsColor;
-	vector<Mat> m_NorWeightMaps;
-	vector<vector<Mat>> m_NorWeightMapsColor;
+	vector<Mat> m_weightMaps;
+	vector<vector<Mat>> m_weightMapsColor;
+	vector<Mat> m_normWeightMaps;
+	vector<vector<Mat>> m_normWeightMapsColor;
 
 	Mat m_resultImage;
 	int m_nframes;
@@ -79,15 +99,15 @@ public:
 	ExposureFusion(char* seqPath);  
 
 	//获取特定格式的文件名    
-	const int get_files_format(const string& path, const string& format, vector<string>& files);
+	const int getFilesFormat(const string& path, const string& format, vector<string>& files);
 
-	void QualityMeasuresProcessing(void);
+	void qualityMeasuresProcessing(void);
 	// m_nframes weight map;
 
 	// 处理过程
-	bool SaveImageBMP(const char* filename);
+	bool saveImageBMP(const char* filename);
 
-	void FusionProcessing(void);
+	void fusionProcessing(void);
 
 	void setNormalizedWeightMaps();
 

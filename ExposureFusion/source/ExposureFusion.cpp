@@ -1,18 +1,19 @@
 #include "ExposureFusion.h"
 
 
-ExposureFusion::ExposureFusion(char* seqPath)  // 构造函数
+// 构造函数
+ExposureFusion::ExposureFusion(char* seq_path)  
 {
 	this->m_state = 0;
 	this->m_nframes = 0;
 
 	// Read file list
-	string format = std::string(".jpg");  // .jpg .png
+	string format = std::string(".jpg");  // .jpg and .png image
 	vector<string> img_paths;
-	int N_files = this->get_files_format(seqPath, format, img_paths);
+	int N_files = this->getFilesFormat(seq_path, format, img_paths);
 
 	format = std::string(".png");
-	N_files = this->get_files_format(seqPath, format, img_paths);
+	N_files = this->getFilesFormat(seq_path, format, img_paths);
 	this->m_nframes = (int)img_paths.size();
 
 	if (this->m_nframes > 0)
@@ -66,7 +67,7 @@ ExposureFusion::ExposureFusion(char* seqPath)  // 构造函数
 }
 
 
-const int ExposureFusion::get_files_format(const string & path, const string & format, vector<string>& files)
+const int ExposureFusion::getFilesFormat(const string & path, const string & format, vector<string>& files)
 {
 	intptr_t hFile = 0;  // 文件句柄  64位下long 改为 intptr_t
 	struct _finddata_t fileinfo;  // 文件信息 
@@ -80,7 +81,7 @@ const int ExposureFusion::get_files_format(const string & path, const string & f
 				if (strcmp(fileinfo.name, ".") != 0 && strcmp(fileinfo.name, "..") != 0)  // 文件夹名中不含"."和".."
 				{
 					files.push_back(p.assign(path).append("\\").append(fileinfo.name));  // 保存文件夹名
-					this->get_files_format(p.assign(path).append("\\").append(fileinfo.name), format, files);  // 递归遍历文件夹
+					this->getFilesFormat(p.assign(path).append("\\").append(fileinfo.name), format, files);  // 递归遍历文件夹
 				}
 			}
 			else
@@ -95,7 +96,7 @@ const int ExposureFusion::get_files_format(const string & path, const string & f
 }
 
 
-void ExposureFusion::QualityMeasuresProcessing()
+void ExposureFusion::qualityMeasuresProcessing()
 {
 	Mat weightMap;
 	Mat contrast;
@@ -113,7 +114,7 @@ void ExposureFusion::QualityMeasuresProcessing()
 
 		QualityMeasures* qm = new QualityMeasures(m_inputImages[nfrm].clone(), m_inputGrayImages[nfrm].clone());
 
-		m_WeightMaps.push_back(qm->getterWeightMap());
+		m_weightMaps.push_back(qm->getterWeightMap());
 		delete(qm);
 		qm = nullptr;
 	}
@@ -124,7 +125,7 @@ void ExposureFusion::QualityMeasuresProcessing()
 	cout << endl;
 }
 
-void ExposureFusion::FusionProcessing()
+void ExposureFusion::fusionProcessing()
 {
 	int nframes = getnframes();
 	int rows = m_inputImages[0].rows;
@@ -170,37 +171,38 @@ void ExposureFusion::setNormalizedWeightMaps()
 
 				for (int n = 0; n < nframes; n++)
 				{
-					sumPix += m_WeightMaps[n].at<float>(y, x);
+					sumPix += m_weightMaps[n].at<float>(y, x);
 				}
-				NorWeightMap.at<float>(y, x) = m_WeightMaps[nfrm].at<float>(y, x) / sumPix;
+				NorWeightMap.at<float>(y, x) = m_weightMaps[nfrm].at<float>(y, x) / sumPix;
 			}
 		}
 
-		m_NorWeightMaps.push_back(NorWeightMap);
+		m_normWeightMaps.push_back(NorWeightMap);
 	}
 #endif
 }
 
 Mat ExposureFusion::setResultByPyramid(int nch)
 {
-	int pyramidDepth = 4;
-	vector<Mat> gaussianPyramid;
-	vector<vector<Mat>> gaussianWeightMapPyramid;
-	vector<vector<Mat>> laplacianImagePyramid;
-	vector<Mat> fusedPyramid;
+	const int pyramid_depth = 4;
+	vector<Mat> gauss_pyramid;
+	vector<vector<Mat>> gauss_weight_map_pyramid;
+	vector<vector<Mat>> lap_img_pyramid;
+	vector<Mat> fused_pyramid;
 	vector<vector<Mat>> fusedPyramidColor;
 	const int nframes = getnframes();
+
 	Mat src;
-	Mat ucharMap;
-	Mat laplimg;
+	Mat uchar_map;
+	Mat lap_limg;
 	Mat upGauss;
 	Mat cuGauss;
 	Mat pvGauss;
-	Mat laplacianResult;
+	Mat lap_result;
 	Mat fuseimg;
 	Mat rsLaplac;
 	Mat result;
-	float pix = 0;
+	float pix = 0.0f;
 
 #if MODE==GRAY
 	vector<Mat> BGR;
@@ -208,122 +210,122 @@ Mat ExposureFusion::setResultByPyramid(int nch)
 	{
 		split(m_inputImages[n_frm], BGR);
 		src = BGR[nch].clone();
-		laplacianImagePyramid.push_back(vector<Mat>());
-		gaussianWeightMapPyramid.push_back(vector<Mat>());
-		cv::buildPyramid(src, gaussianPyramid, pyramidDepth);
+		lap_img_pyramid.push_back(vector<Mat>());
+		gauss_weight_map_pyramid.push_back(vector<Mat>());
+		cv::buildPyramid(src, gauss_pyramid, pyramid_depth);
 
-		ucharMap = Mat(m_NorWeightMaps[n_frm].size(), CV_8UC1);
-		for (int y = 0; y < ucharMap.rows; y++)
+		uchar_map = Mat(m_normWeightMaps[n_frm].size(), CV_8UC1);
+		for (int y = 0; y < uchar_map.rows; y++)
 		{
-			for (int x = 0; x < ucharMap.cols; x++)
+			for (int x = 0; x < uchar_map.cols; x++)
 			{
-				pix = m_NorWeightMaps[n_frm].at<float>(y, x) * 255;
-				pix = (pix > 255) ? 255 : pix;
-				pix = (pix < 0) ? 0 : pix;
-				ucharMap.at<uchar>(y, x) = (uchar)pix;
+				pix = m_normWeightMaps[n_frm].at<float>(y, x) * 255.0f;
+				pix = (pix > 255.0f) ? 255.0f : pix;
+				pix = (pix < 0.0f) ? 0.0f : pix;
+				uchar_map.at<uchar>(y, x) = (uchar)pix;
 			}
 		}
 
-		cv::buildPyramid(ucharMap, gaussianWeightMapPyramid[n_frm], pyramidDepth);
+		cv::buildPyramid(uchar_map, gauss_weight_map_pyramid[n_frm], pyramid_depth);
 
-		for (int i = 1; i < gaussianPyramid.size(); i++)
+		for (int i = 1; i < gauss_pyramid.size(); i++)
 		{
-			Mat prev = gaussianPyramid[i - 1].clone();
-			Mat crnt = gaussianPyramid[i].clone();
+			Mat prev = gauss_pyramid[i - 1].clone();
+			Mat crnt = gauss_pyramid[i].clone();
 
 			cv::pyrUp(crnt, crnt, prev.size());
-			laplimg = Mat(prev.size(), CV_8SC1);
+			lap_limg = Mat(prev.size(), CV_8SC1);
 
 			for (int y = 0; y < prev.rows; y++)
 			{
 				for (int x = 0; x < prev.cols; x++)
 				{
-					laplimg.at<char>(y, x) = prev.at<uchar>(y, x) - crnt.at<uchar>(y, x);
+					lap_limg.at<char>(y, x) = prev.at<uchar>(y, x) - crnt.at<uchar>(y, x);
 				}
 			}
 
-			laplacianImagePyramid[n_frm].push_back(laplimg.clone());
+			lap_img_pyramid[n_frm].push_back(lap_limg.clone());
 			prev.release();
 			crnt.release();
-			laplimg.release();
+			lap_limg.release();
 		}
 
-		laplacianImagePyramid[n_frm].push_back(gaussianPyramid[pyramidDepth].clone());
-		ucharMap.release();
+		lap_img_pyramid[n_frm].push_back(gauss_pyramid[pyramid_depth].clone());
+		uchar_map.release();
 	}
 
 	cout << "Set laplacian image pyramid " << endl << "Set gaussian weight map pyramid" << endl;
-	for (int l = 0; l < pyramidDepth; ++l)
+	for (int l = 0; l < pyramid_depth; ++l)
 	{
 		//cout << "pyramid depth: " << l << endl;
-		laplacianResult = Mat(laplacianImagePyramid[0][l].size(), CV_32SC1);
-		for (int y = 0; y < laplacianResult.rows; y++)
+		lap_result = Mat(lap_img_pyramid[0][l].size(), CV_32SC1);
+		for (int y = 0; y < lap_result.rows; y++)
 		{
-			for (int x = 0; x < laplacianResult.cols; x++)
+			for (int x = 0; x < lap_result.cols; x++)
 			{
 				pix = 0;
 				for (int nfrm = 0; nfrm < nframes; nfrm++)
 				{
-					pix += gaussianWeightMapPyramid[nfrm][l].at<uchar>(y, x) * laplacianImagePyramid[nfrm][l].at<char>(y, x);
+					pix += gauss_weight_map_pyramid[nfrm][l].at<uchar>(y, x) * lap_img_pyramid[nfrm][l].at<char>(y, x);
 				}
 
-				laplacianResult.at<int>(y, x) = int(pix / 255.0f);
+				lap_result.at<int>(y, x) = int(pix / 255.0f);
 			}
 		}
 
-		fusedPyramid.push_back(laplacianResult.clone());
-		laplacianResult.release();
+		fused_pyramid.push_back(lap_result.clone());
+		lap_result.release();
 	}
 
 
-	laplacianResult = Mat(laplacianImagePyramid[0][pyramidDepth].size(), CV_8UC1);
-	for (int y = 0; y < laplacianResult.rows; ++y)
+	lap_result = Mat(lap_img_pyramid[0][pyramid_depth].size(), CV_8UC1);
+	for (int y = 0; y < lap_result.rows; ++y)
 	{
-		for (int x = 0; x < laplacianResult.cols; ++x)
+		for (int x = 0; x < lap_result.cols; ++x)
 		{
 			pix = 0;
 			for (int n_frm = 0; n_frm < nframes; ++n_frm)
 			{
-				pix += gaussianWeightMapPyramid[n_frm][pyramidDepth].at<uchar>(y, x) * (laplacianImagePyramid[n_frm][pyramidDepth].at<uchar>(y, x));
+				pix += gauss_weight_map_pyramid[n_frm][pyramid_depth].at<uchar>(y, x) * (lap_img_pyramid[n_frm][pyramid_depth].at<uchar>(y, x));
 			}
 
-			laplacianResult.at<uchar>(y, x) = (uchar)(pix / 255);	// uchar char; int
+			lap_result.at<uchar>(y, x) = (uchar)(pix / 255);	// uchar char; int
 		}
 	}
-	fusedPyramid.push_back(laplacianResult.clone());
+	fused_pyramid.push_back(lap_result.clone());
 
 	cout << "Set fused pyramid" << endl;
 
 	int i_pix = 0;
-	Mat temp = fusedPyramid[pyramidDepth].clone();
-	Mat fusedLaplacianImage = fusedPyramid[pyramidDepth - 1].clone();
-	int rows = fusedLaplacianImage.rows;
-	int cols = fusedLaplacianImage.cols;
+	Mat temp = fused_pyramid[pyramid_depth].clone();
+	Mat fused_lapl_image = fused_pyramid[pyramid_depth - 1].clone();
+	int rows = fused_lapl_image.rows;
+	int cols = fused_lapl_image.cols;
 
 	Mat sumimg(Size(cols, rows), CV_8UC1);
-	pyrUp(temp, temp, fusedLaplacianImage.size());
+	cv::pyrUp(temp, temp, fused_lapl_image.size());
 
 	for (int y = 0; y < temp.rows; y++)
 	{
 		for (int x = 0; x < temp.cols; x++)
 		{
-			i_pix = temp.at<uchar>(y, x) + fusedLaplacianImage.at<int>(y, x);
+			i_pix = temp.at<uchar>(y, x) + fused_lapl_image.at<int>(y, x);
 			i_pix = (i_pix > 255) ? 255 : i_pix;
 			i_pix = (i_pix < 0) ? 0 : i_pix;
 			sumimg.at<uchar>(y, x) = (uchar)i_pix;
 		}
 	}
 
-	for (int i = pyramidDepth - 2; i >= 0; i--)
+	for (int i = pyramid_depth - 2; i >= 0; i--)
 	{
-		fusedLaplacianImage = fusedPyramid[i].clone();
+		fused_lapl_image = fused_pyramid[i].clone();
 
-		pyrUp(sumimg, sumimg, fusedLaplacianImage.size());
+		cv::pyrUp(sumimg, sumimg, fused_lapl_image.size());
 		for (int y = 0; y < sumimg.rows; y++)
 		{
 			for (int x = 0; x < sumimg.cols; x++)
 			{
-				i_pix = fusedLaplacianImage.at<int>(y, x) + sumimg.at<uchar>(y, x);
+				i_pix = fused_lapl_image.at<int>(y, x) + sumimg.at<uchar>(y, x);
 				i_pix = (i_pix > 255) ? 255 : i_pix;
 				i_pix = (i_pix < 0) ? 0 : i_pix;
 				sumimg.at<uchar>(y, x) = (uchar)i_pix;
@@ -337,7 +339,7 @@ Mat ExposureFusion::setResultByPyramid(int nch)
 	return result;
 }
 
-bool ExposureFusion::SaveImageBMP(const char* filePath)
+bool ExposureFusion::saveImageBMP(const char* filePath)
 {
 	if (!strcmp(".bmp", &filePath[strlen(filePath) - 4]))
 	{

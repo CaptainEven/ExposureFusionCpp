@@ -28,10 +28,10 @@ int main()
 			continue;
 		}
 
-		EF.QualityMeasuresProcessing();
-		cout << "finish to QualityMeasuresProcessing" << endl;
-		EF.FusionProcessing();
-		cout << "finish to FusionProcessing" << endl;
+		EF.qualityMeasuresProcessing();
+		cout << "finish to qualityMeasuresProcessing" << endl;
+		EF.fusionProcessing();
+		cout << "finish to fusionProcessing" << endl;
 		// ----------
 
 		tok = clock();
@@ -46,7 +46,7 @@ int main()
 		cv::destroyWindow(win_name);
 
 		/*sprintf(res_f_name, "%s\\EF_%d.bmp", res_path, i);
-		if (!EF.SaveImageBMP(res_f_name))
+		if (!EF.saveImageBMP(res_f_name))
 		{
 			cout << "fail to save result image" << endl;
 			return -1;
