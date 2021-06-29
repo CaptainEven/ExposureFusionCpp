@@ -29,9 +29,9 @@ using namespace std;
 class QualityMeasures
 {
 private:
-	Mat Contrast;
-	Mat Saturation;
-	Mat WellExposedness;
+	Mat m_contrast;
+	Mat m_saturation;
+	Mat m_well_exposureness;
 	Mat WeightMap;
 	Mat WeightMapColor[3];  // B, G, R
 
@@ -40,41 +40,41 @@ public:
 	QualityMeasures(Mat img, Mat gimg)
 	{
 #if MODE==GRAY
-		this->Contrast = getContrastMeasure(gimg);
-		this->Saturation = getSaturationMeasure(img);
-		this->WellExposedness = getWellExposednessMeasure(gimg);	// 酒流鳖瘤肋等扒瘤狼缴胶反促
-		this->WeightMap = getWeightMapImage();
+		int ret = getContrastMeasure(gimg, this->m_contrast);
+		ret = getSaturationMeasure(img, this->m_saturation);
+		ret = getWellExposednessMeasure(gimg, this->m_well_exposureness);
+		ret = getWeightMapImage(this->WeightMap);
 #endif
 	}
 
-	Mat getContrastMeasure(const Mat& src);
-	Mat getSaturationMeasure(const Mat& src);
-	Mat getWellExposednessMeasure(const Mat& src);
-	Mat getWeightMapImage();
+	int getContrastMeasure(const Mat& src, Mat& contrast);
+	int getSaturationMeasure(const Mat& src, Mat& Saturation);
+	int getWellExposednessMeasure(const Mat& src, Mat& well_exposure);
+	int getWeightMapImage(Mat& weight_map);
 
-	inline Mat getterContrast() 
+	inline const Mat& getContrast() const
 	{
-		return Contrast.clone();
+		return this->m_contrast;
 	}
 
-	inline Mat getterSaturation() 
+	inline const Mat& getSaturation() const
 	{
-		return Saturation.clone();
+		return this->m_saturation;
 	}
 
-	inline Mat getterWellExposedness()
+	inline const Mat& getWellExposureness() const
 	{
-		return WellExposedness.clone();
+		return this->m_well_exposureness;
 	}
 
-	inline Mat getterWeightMap()
+	inline const Mat& getWeightMap() const
 	{
-		return WeightMap.clone();
+		return this->WeightMap;
 	}
 
-	inline Mat getterWeightMapColor(const int nch)
+	inline const Mat& getWeightMapColor(const int nch) const
 	{
-		return WeightMapColor[nch].clone();
+		return this->WeightMapColor[nch];
 	}
 };
 
@@ -96,7 +96,7 @@ private:
 
 public:
 	// 构造函数
-	ExposureFusion(const char* seq_path, const bool do_resize);  
+	ExposureFusion(const char* seq_path, const bool do_resize);
 
 	//获取特定格式的文件名    
 	const int getFilesFormat(const string& path, const string& format, vector<string>& files);
@@ -119,7 +119,7 @@ public:
 		return this->m_resultImage;
 	}
 
-	inline int getnframes() const 
+	inline int getnframes() const
 	{
 		return this->m_nframes;
 	}

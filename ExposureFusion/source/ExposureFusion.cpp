@@ -56,6 +56,7 @@ ExposureFusion::ExposureFusion(const char* seq_path, const bool do_resize)
 
 					// do resizing 
 					cv::resize(input_img, input_img, sz, 0.0, 0.0, cv::INTER_CUBIC);
+
 				} while (input_img.rows > 1000);
 			}
 		}
@@ -117,7 +118,7 @@ void ExposureFusion::qualityMeasuresProcessing()
 
 		QualityMeasures* qm = new QualityMeasures(m_inputImages[nfrm].clone(), m_inputGrayImages[nfrm].clone());
 
-		m_weightMaps.push_back(qm->getterWeightMap());
+		this->m_weightMaps.push_back(qm->getWeightMap());
 		delete(qm);
 		qm = nullptr;
 	}
@@ -127,6 +128,7 @@ void ExposureFusion::qualityMeasuresProcessing()
 	cout << "processing time of QualitymeasureProcessing: " 
 		<< (float)(tok - tic) / CLOCKS_PER_SEC << "s" << endl;
 }
+
 
 void ExposureFusion::fusionProcessing()
 {
@@ -184,6 +186,7 @@ void ExposureFusion::setNormalizedWeightMaps()
 	}
 #endif
 }
+
 
 Mat ExposureFusion::setResultByPyramid(int nch)
 {
@@ -280,7 +283,6 @@ Mat ExposureFusion::setResultByPyramid(int nch)
 		lap_result.release();
 	}
 
-
 	lap_result = Mat(lap_img_pyramid[0][pyramid_depth].size(), CV_8UC1);
 	for (int y = 0; y < lap_result.rows; ++y)
 	{
@@ -298,7 +300,6 @@ Mat ExposureFusion::setResultByPyramid(int nch)
 	fused_pyramid.push_back(lap_result.clone());
 
 	cout << "Set fused pyramid" << endl;
-
 	int i_pix = 0;
 	Mat temp = fused_pyramid[pyramid_depth].clone();
 	Mat fused_lapl_image = fused_pyramid[pyramid_depth - 1].clone();
