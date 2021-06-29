@@ -13,7 +13,7 @@ int main()
 	char seq_top_path[256];
 
 	const char* res_path = "./res/";
-	//char res_f_name[256];
+	char res_f_path[256];
 	for (int i = 1; i <= 15; i++)
 	{
 		printf("Start processing seq %d...\n", i);
@@ -22,7 +22,7 @@ int main()
 		time_t tok, tic = clock();
 
 		// ----------
-		ExposureFusion EF(seq_top_path);
+		ExposureFusion EF(seq_top_path, false);
 		if (EF.getState() < 0)
 		{
 			continue;
@@ -35,22 +35,23 @@ int main()
 		// ----------
 
 		tok = clock();
-		cout << endl << "total processing time : " 
+		cout << "total processing time : " 
 			<< (float)(tok - tic) / CLOCKS_PER_SEC << "s" << endl;
 
-		// show result
-		char win_name[60];
-		sprintf(win_name, "Exposure Fusion HDR %d", i);
-		cv::imshow(win_name, EF.getResultImage());
-		cv::waitKey();
-		cv::destroyWindow(win_name);
+		//// show result
+		//char win_name[60];
+		//sprintf(win_name, "Exposure Fusion HDR %d", i);
+		//cv::imshow(win_name, EF.getResultImage());
+		//cv::waitKey();
+		//cv::destroyWindow(win_name);
 
-		/*sprintf(res_f_name, "%s\\EF_%d.bmp", res_path, i);
-		if (!EF.saveImageBMP(res_f_name))
+		sprintf(res_f_path, "%s\\EF_%d.bmp", res_path, i);
+		if (!EF.saveImageBMP(res_f_path))
 		{
 			cout << "fail to save result image" << endl;
 			return -1;
-		}*/
+		}
+		printf("%s saved.\n", res_f_path);
 
 		printf("End processing seq %d.\n\n", i);
 		//system("cls");

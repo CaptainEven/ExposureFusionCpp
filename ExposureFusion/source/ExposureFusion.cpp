@@ -2,7 +2,7 @@
 
 
 // ¹¹Ôìº¯Êý
-ExposureFusion::ExposureFusion(char* seq_path)  
+ExposureFusion::ExposureFusion(const char* seq_path, const bool do_resize)
 {
 	this->m_state = 0;
 	this->m_nframes = 0;
@@ -42,19 +42,22 @@ ExposureFusion::ExposureFusion(char* seq_path)
 		}
 
 		// Resize for show convenience
-		if (input_img.rows > 1000)
+		if (do_resize)
 		{
-			do
+			if (input_img.rows > 1000)
 			{
-				Size sz(int(input_img.cols*0.5), int(input_img.rows*0.5));
-				if ((int)(input_img.cols*0.5) % BLOCKCOLS == 0 || (int)(input_img.rows*0.5) % BLOCKROWS == 0)
+				do
 				{
-					sz = Size(int(input_img.cols*0.5 + 1), int(input_img.cols*0.5 + 1));
-				}
+					Size sz(int(input_img.cols*0.5f), int(input_img.rows*0.5f));
+					if ((int)(input_img.cols*0.5f) % BLOCKCOLS == 0 || (int)(input_img.rows*0.5f) % BLOCKROWS == 0)
+					{
+						sz = Size(int(input_img.cols*0.5 + 1), int(input_img.cols*0.5 + 1));
+					}
 
-				// do resizing 
-				cv::resize(input_img, input_img, sz, 0.0, 0.0, cv::INTER_CUBIC);
-			} while (input_img.rows > 1000);
+					// do resizing 
+					cv::resize(input_img, input_img, sz, 0.0, 0.0, cv::INTER_CUBIC);
+				} while (input_img.rows > 1000);
+			}
 		}
 
 		Mat gray(input_img.size(), CV_8UC1);
@@ -121,8 +124,8 @@ void ExposureFusion::qualityMeasuresProcessing()
 	// ---------
 
 	tok = clock();
-	cout << endl << "processing time of QualitymeasureProcessing: " << (float)(tok - tic) / CLOCKS_PER_SEC << endl;
-	cout << endl;
+	cout << "processing time of QualitymeasureProcessing: " 
+		<< (float)(tok - tic) / CLOCKS_PER_SEC << "s" << endl;
 }
 
 void ExposureFusion::fusionProcessing()

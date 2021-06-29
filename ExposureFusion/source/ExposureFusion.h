@@ -96,7 +96,7 @@ private:
 
 public:
 	// 构造函数
-	ExposureFusion(char* seqPath);  
+	ExposureFusion(const char* seq_path, const bool do_resize);  
 
 	//获取特定格式的文件名    
 	const int getFilesFormat(const string& path, const string& format, vector<string>& files);
