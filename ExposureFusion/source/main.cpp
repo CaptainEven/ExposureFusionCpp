@@ -45,12 +45,9 @@ int main()
 		//cv::waitKey();
 		//cv::destroyWindow(win_name);
 
-		sprintf(res_f_path, "%s\\EF_%d.bmp", res_path, i);
-		if (!EF.saveImageBMP(res_f_path))
-		{
-			cout << "fail to save result image" << endl;
-			return -1;
-		}
+		sprintf(res_f_path, "%s\\EF_%d.jpg", res_path, i);
+		cv::imwrite(res_f_path, EF.getResultImage());
+
 		printf("%s saved.\n", res_f_path);
 		printf("End processing seq %d.\n\n", i);
 		//system("cls");
@@ -58,3 +55,11 @@ int main()
 
 	return 0;
 }
+
+
+//sprintf(res_f_path, "%s\\EF_%d.bmp", res_path, i);
+//if (!EF.saveImageBMP(res_f_path))
+//{
+//	cout << "fail to save result image" << endl;
+//	return -1;
+//}

@@ -190,12 +190,13 @@ void ExposureFusion::setNormalizedWeightMaps()
 int ExposureFusion::setResultByPyramid(const int ch, Mat& channel)
 {
 	const int pyr_max_level = 4;
+	const int nframes = getnframes();
+
 	vector<Mat> gauss_pyramid;
 	vector<vector<Mat>> gauss_weight_map_pyramid;
 	vector<vector<Mat>> lap_img_pyramid;
 	vector<Mat> fused_pyramid;
 	vector<vector<Mat>> fusedPyramidColor;
-	const int nframes = getnframes();
 
 	//Mat src;
 	Mat uchar_map;
@@ -210,7 +211,7 @@ int ExposureFusion::setResultByPyramid(const int ch, Mat& channel)
 	float pix = 0.0f;
 
 	vector<Mat> BGR;
-	for (int fr_i = 0; fr_i < nframes; fr_i++)
+	for (int fr_i = 0; fr_i < nframes; fr_i++)  // process each frame 
 	{
 		cv::split(this->m_imgs_color[fr_i], BGR);
 		const Mat&src = BGR[ch];
@@ -219,12 +220,12 @@ int ExposureFusion::setResultByPyramid(const int ch, Mat& channel)
 		gauss_weight_map_pyramid.push_back(vector<Mat>());
 		cv::buildPyramid(src, gauss_pyramid, pyr_max_level);
 
-		uchar_map = Mat(this->m_normWeightMaps[fr_i].size(), CV_8U);
+		uchar_map = Mat::zeros(this->m_normWeightMaps[fr_i].size(), CV_8U);
 		for (int y = 0; y < uchar_map.rows; y++)
 		{
 			for (int x = 0; x < uchar_map.cols; x++)
 			{
-				pix = m_normWeightMaps[fr_i].at<float>(y, x) * 255.0f;
+				pix = this->m_normWeightMaps[fr_i].at<float>(y, x) * 255.0f;
 				pix = (pix > 255.0f) ? 255.0f : pix;
 				pix = (pix < 0.0f) ? 0.0f : pix;
 				uchar_map.at<uchar>(y, x) = (uchar)pix;
@@ -233,7 +234,7 @@ int ExposureFusion::setResultByPyramid(const int ch, Mat& channel)
 
 		cv::buildPyramid(uchar_map, gauss_weight_map_pyramid[fr_i], pyr_max_level);
 
-		for (int i = 1; i < gauss_pyramid.size(); i++)
+		for (int i = 1; i < gauss_pyramid.size(); i++)  // process each pyramid
 		{
 			const Mat& pre = gauss_pyramid[i - 1];
 			const Mat& cur = gauss_pyramid[i];
@@ -251,8 +252,6 @@ int ExposureFusion::setResultByPyramid(const int ch, Mat& channel)
 			}
 
 			lap_img_pyramid[fr_i].push_back(lap_limg.clone());
-			//pre.release();
-			//cur.release();
 			lap_limg.release();
 		}
 
@@ -260,25 +259,27 @@ int ExposureFusion::setResultByPyramid(const int ch, Mat& channel)
 		uchar_map.release();
 	}
 
-	cout << "Set laplacian image pyramid " << endl << "Set gaussian weight map pyramid" << endl;
-	for (int l = 0; l < pyr_max_level; ++l)
+	cout << "Set Laplace image pyramid " << endl << "Set gaussian weight map pyramid" << endl;
+	for (int l = 0; l < pyr_max_level; ++l)  // process each level
 	{
 		//cout << "pyramid depth: " << l << endl;
-		lap_result = Mat(lap_img_pyramid[0][l].size(), CV_32SC1);
+		lap_result = Mat::zeros(lap_img_pyramid[0][l].size(), CV_32SC1);
 		for (int y = 0; y < lap_result.rows; y++)
 		{
 			for (int x = 0; x < lap_result.cols; x++)
 			{
-				pix = 0;
-				for (int nfrm = 0; nfrm < nframes; nfrm++)
+				// process each pixel
+				pix = 0.0f;  // reset each pixel
+				for (int fr_i = 0; fr_i < nframes; fr_i++)
 				{
-					pix += gauss_weight_map_pyramid[nfrm][l].at<uchar>(y, x) * lap_img_pyramid[nfrm][l].at<char>(y, x);
+					pix += gauss_weight_map_pyramid[fr_i][l].at<uchar>(y, x) * lap_img_pyramid[fr_i][l].at<char>(y, x);
 				}
 
 				lap_result.at<int>(y, x) = int(pix / 255.0f);
 			}
 		}
 
+		//cout << lap_result.type() << endl;
 		fused_pyramid.push_back(lap_result.clone());
 		lap_result.release();
 	}
@@ -294,27 +295,28 @@ int ExposureFusion::setResultByPyramid(const int ch, Mat& channel)
 				pix += gauss_weight_map_pyramid[n_frm][pyr_max_level].at<uchar>(y, x) * (lap_img_pyramid[n_frm][pyr_max_level].at<uchar>(y, x));
 			}
 
-			lap_result.at<uchar>(y, x) = (uchar)(pix / 255);	// uchar char; int
+			lap_result.at<uchar>(y, x) = (uchar)(pix / 255.0f);	// uchar char; int
 		}
 	}
 	fused_pyramid.push_back(lap_result.clone());
 
 	cout << "Set fused pyramid" << endl;
 	int i_pix = 0;
-	Mat temp = fused_pyramid[pyr_max_level].clone();
-	Mat fused_lap_img = fused_pyramid[pyr_max_level - 1].clone();
+	const Mat& temp = fused_pyramid[pyr_max_level];
+	const Mat& fused_lap_img = fused_pyramid[pyr_max_level - 1];
 	const int& rows = fused_lap_img.rows;
 	const int& cols = fused_lap_img.cols;
 
-	channel.create(Size(cols, rows), CV_8UC1);
+	channel = Mat::zeros(Size(cols, rows), CV_8UC1);
 
-	cv::pyrUp(temp, temp, fused_lap_img.size());
+	Mat temp_up;
+	cv::pyrUp(temp, temp_up, fused_lap_img.size());
 
-	for (int y = 0; y < temp.rows; y++)
+	for (int y = 0; y < temp_up.rows; y++)
 	{
-		for (int x = 0; x < temp.cols; x++)
+		for (int x = 0; x < temp_up.cols; x++)
 		{
-			i_pix = temp.at<uchar>(y, x) + fused_lap_img.at<int>(y, x);
+			i_pix = temp_up.at<uchar>(y, x) + fused_lap_img.at<int>(y, x);
 			i_pix = (i_pix > 255) ? 255 : i_pix;
 			i_pix = (i_pix < 0) ? 0 : i_pix;
 			channel.at<uchar>(y, x) = (uchar)i_pix;
@@ -323,7 +325,7 @@ int ExposureFusion::setResultByPyramid(const int ch, Mat& channel)
 
 	for (int i = pyr_max_level - 2; i >= 0; i--)
 	{
-		fused_lap_img = fused_pyramid[i].clone();
+		const Mat& fused_lap_img = fused_pyramid[i];
 
 		cv::pyrUp(channel, channel, fused_lap_img.size());
 		for (int y = 0; y < channel.rows; y++)
