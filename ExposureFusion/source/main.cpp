@@ -14,7 +14,7 @@ int main()
 
 	const char* res_path = "./res/";
 	char res_f_path[256];
-	for (int i = 1; i <= 15; i++)
+	for (int i = 1; i <= 35; i++)
 	{
 		sprintf(seq_top_path, "%s%d", seq_path, i);
 		printf("Start processing seq %s...\n", seq_top_path);

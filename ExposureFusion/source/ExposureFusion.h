@@ -39,12 +39,12 @@ private:
 
 public:
 
-	QualityMeasures(const Mat& img, const Mat& gimg)
+	QualityMeasures(const Mat& img_color, const Mat& img_gray)
 	{
 #if MODE==GRAY
-		int ret = getContrastMeasure(gimg, this->m_contrast);
-		ret = getSaturationMeasure(img, this->m_saturation);
-		ret = getWellExposednessMeasure(gimg, this->m_well_exposureness);
+		int ret = getContrastMeasure(img_gray, this->m_contrast);
+		ret = getSaturationMeasure(img_color, this->m_saturation);
+		ret = getWellExposednessMeasure(img_gray, this->m_well_exposureness);
 		ret = getWeightMapImage(this->WeightMap);
 #endif
 	}
