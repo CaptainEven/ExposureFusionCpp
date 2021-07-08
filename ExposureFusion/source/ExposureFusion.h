@@ -109,7 +109,7 @@ public:
 	// 处理过程
 	bool saveImageBMP(const char* filename);
 
-	void fusionProcessing(void);
+	void fuse(void);
 
 	void setNormalizedWeightMaps();
 

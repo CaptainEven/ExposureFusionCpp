@@ -30,8 +30,8 @@ int main()
 
 		EF.qualityMeasuresProcessing();
 		cout << "finish to qualityMeasuresProcessing" << endl;
-		EF.fusionProcessing();
-		cout << "finish to fusionProcessing" << endl;
+		EF.fuse();
+		cout << "finish to fuse" << endl;
 		// ----------
 
 		tok = clock();
