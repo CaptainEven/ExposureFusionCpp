@@ -28,8 +28,8 @@ ExposureFusion::ExposureFusion(const char* seq_path, const bool do_resize)
 	}
 
 	// Ô¤ÏÈ·ÖÅäÄÚ´æ
-	this->m_input_imgs.reserve(this->m_nframes);
-	this->m_input_gray_imgs.reserve(this->m_nframes);
+	this->m_imgs_color.reserve(this->m_nframes);
+	this->m_imgs_gray.reserve(this->m_nframes);
 
 	for (int n = 0; n < m_nframes; n++)
 	{
@@ -63,8 +63,8 @@ ExposureFusion::ExposureFusion(const char* seq_path, const bool do_resize)
 
 		Mat gray(input_img.size(), CV_8UC1);
 		cv::cvtColor(input_img, gray, CV_BGR2GRAY);
-		this->m_input_imgs.push_back(input_img);
-		this->m_input_gray_imgs.push_back(gray);
+		this->m_imgs_color.push_back(input_img);
+		this->m_imgs_gray.push_back(gray);
 	}
 
 	std::cout << "finish to read Image Sequence " << endl;
@@ -112,12 +112,13 @@ void ExposureFusion::qualityMeasuresProcessing()
 	time_t tok, tic = clock();
 
 	// ---------
-	this->m_weightMaps.reserve(this->m_nframes);
+	//this->m_weightMaps.reserve(this->m_nframes);
 	for (int fr_i = 0; fr_i < this->m_nframes; fr_i++)
 	{
 		//cout << "Quality measure processing - Frame number: " << fr_i + 1 << endl;
-		QualityMeasures qm = QualityMeasures(this->m_input_imgs[fr_i], this->m_input_gray_imgs[fr_i]);
-		this->m_weightMaps.push_back(qm.getWeightMap());
+		QualityMeasures qm = QualityMeasures(this->m_imgs_color[fr_i], this->m_imgs_gray[fr_i]);
+		weightMap = qm.getWeightMap();
+		this->m_weightMaps.push_back(weightMap);
 	}
 	// ---------
 
@@ -130,8 +131,8 @@ void ExposureFusion::qualityMeasuresProcessing()
 void ExposureFusion::fusionProcessing()
 {
 	const int nframes = getnframes();
-	const int rows = m_input_imgs[0].rows;
-	const int cols = m_input_imgs[0].cols;
+	const int rows = m_imgs_color[0].rows;
+	const int cols = m_imgs_color[0].cols;
 	int pyramidDepth = 4;
 
 	this->setNormalizedWeightMaps();
@@ -155,28 +156,28 @@ void ExposureFusion::fusionProcessing()
 void ExposureFusion::setNormalizedWeightMaps()
 {
 	const int& nframes = getnframes();
-	const int& rows = m_input_imgs[0].rows;
-	const int& cols = m_input_imgs[0].cols;
+	const int& rows = m_imgs_color[0].rows;
+	const int& cols = m_imgs_color[0].cols;
 
-	float sumPix = 0.0f;
+	float sum_pix = 0.0f;
 
 #if MODE==GRAY	
-	for (int nfrm = 0; nfrm < nframes; nfrm++)
+	for (int i = 0; i < nframes; i++)
 	{
-		Mat norm_weight_map(m_input_imgs[0].rows, m_input_imgs[0].cols, CV_32FC1);
+		Mat norm_weight_map = Mat::zeros(m_imgs_color[0].size(), CV_32FC1);
 
 		for (int y = 0; y < rows; y++)
 		{
 			for (int x = 0; x < cols; x++)
 			{
-				sumPix = 0.0f;
+				sum_pix = 0.0f;
 
-				for (int n = 0; n < nframes; n++)
+				for (int j = 0; j < nframes; j++)
 				{
-					sumPix += m_weightMaps[n].at<float>(y, x);
+					sum_pix += this->m_weightMaps[j].at<float>(y, x);
 				}
 
-				norm_weight_map.at<float>(y, x) = m_weightMaps[nfrm].at<float>(y, x) / sumPix;
+				norm_weight_map.at<float>(y, x) = m_weightMaps[i].at<float>(y, x) / sum_pix;
 			}
 		}
 
@@ -212,7 +213,7 @@ int ExposureFusion::setResultByPyramid(const int nch, Mat& channel)
 	vector<Mat> BGR;
 	for (int fr_i = 0; fr_i < nframes; fr_i++)
 	{
-		split(m_input_imgs[fr_i], BGR);
+		split(m_imgs_color[fr_i], BGR);
 		src = BGR[nch].clone();
 		lap_img_pyramid.push_back(vector<Mat>());
 		gauss_weight_map_pyramid.push_back(vector<Mat>());

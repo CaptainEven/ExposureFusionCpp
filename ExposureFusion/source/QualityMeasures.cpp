@@ -10,18 +10,19 @@ int QualityMeasures::getContrastMeasure(const Mat& src, Mat& contrast)
 		return -1;
 	}
 
-	Mat dst(src.size(), CV_16UC1);
-	Mat lptemp(src.size(), CV_16SC1);
-	cv::Laplacian(src, lptemp, CV_16SC1, 3);
+	contrast = Mat::zeros(src.size(), CV_32FC1);
+	cv::Laplacian(src, contrast, -1, 3);
 
-	contrast.create(src.size(), CV_8UC1);  // 初始化内存空间
-	for (int y = 0; y < contrast.rows; y++)
-	{
-		for (int x = 0; x < contrast.cols; x++)
-		{
-			contrast.at<uchar>(y, x) = (lptemp.at<short>(y, x) < 0) ? -lptemp.at<short>(y, x) : lptemp.at<short>(y, x);
-		}
-	}
+	// ----- normalize
+	double min_v = 0.0;
+	double max_v = 0.0;
+	double* min_p = &min_v;
+	double* max_p = &max_v;
+	cv::minMaxLoc(contrast, min_p, max_p);
+
+	Mat normalized;
+	cv::normalize(contrast, normalized, 1.0, 0.0, cv::NORM_MINMAX);
+	contrast = normalized;  // CV_8U
 
 	return 0;
 }
@@ -34,83 +35,86 @@ int QualityMeasures::getSaturationMeasure(const Mat& src, Mat& saturation)
 		return -1;
 	}
 
-	Mat std_dev_img(src.size(), CV_8UC1, CV_RGB(0, 0, 0));
-	saturation = std_dev_img;
+	saturation = Mat::zeros(src.size(), CV_32FC1);
 
 	const int nch = src.channels();
-	float mean = 0;
-	float variance = 0;
-	float stdDev = 0;
+	assert(nch == 3 or nch == 4);
 
-#if MODE==GRAY
+	float mean = 0.0f;
+	float variance = 0.0f;
+	float std_dev = 0.0f;
+
 	for (int y = 0; y < src.rows; y++)
 	{
 		for (int x = 0; x < src.cols; x++)
-		{
-			mean = (src.at<Vec3b>(y, x)[0] + src.at<Vec3b>(y, x)[1] + src.at<Vec3b>(y, x)[2]) / 3.0f;
-			variance = 0;
-			for (int i = 0; i < nch; i++)
-			{
-				variance += (mean - src.at<Vec3b>(y, x)[i]) * (mean - src.at<Vec3b>(y, x)[i]) / 3.0f;
-			}
-			stdDev = sqrt(variance);
-			std_dev_img.at<uchar>(y, x) = (uchar)(stdDev + 0.5f);
+		{ 
+			// compute mean of RGB in each pixel
+			const UINT8& b = src.at<Vec3b>(y, x)[0];
+			const UINT8& g = src.at<Vec3b>(y, x)[1];
+			const UINT8& r = src.at<Vec3b>(y, x)[2];
+
+			mean = (float(b) + float(g) + float(r)) / 3.0f;
+
+			// compute variance and std of RGB in each pixel
+			variance = 0.0f;
+			variance += (mean - float(b)) * (mean - float(b));
+			variance += (mean - float(g)) * (mean - float(g));
+			variance += (mean - float(r)) * (mean - float(r));
+			variance /= 3.0f;
+
+			std_dev = sqrtf(variance);
+			saturation.at<float>(y, x) = std_dev;
 		}
 	}
-#endif
 
 	return 0;
 }
 
 int QualityMeasures::getWellExposednessMeasure(const Mat& src, Mat& well_exposure)
 {
-	if (src.empty())
+	if (src.empty())  // gray image
 	{
 		return -1;
 	}
 
-	Mat dst(src.size(), CV_32FC1);
-	well_exposure.create(src.size(), CV_32FC1);
+	well_exposure = Mat::zeros(src.size(), CV_32FC1);
 
 	float new_pix_val = 0;
-	float gauss_curve_weight = 0;
-
-#if MODE==GRAY
-	Mat temp(src.size(), CV_32FC1);
-	Mat gray(src.size(), CV_8UC1);
+	float gauss_weight = 0;
 
 	for (int y = 0; y < src.rows; y++)
 	{
 		for (int x = 0; x < src.cols; x++)
 		{
 
-			gauss_curve_weight = (float)LUTWEN[src.at<uchar>(y, x)];
-			new_pix_val = gauss_curve_weight * (float)src.at<uchar>(y, x);
-			temp.at<float>(y, x) = new_pix_val;
+			gauss_weight = (float)GAUSS_WEIGHT[src.at<uchar>(y, x)];
+			new_pix_val = gauss_weight * (float)src.at<uchar>(y, x);
 			well_exposure.at<float>(y, x) = new_pix_val;
 		}
 	}
-
-#endif
 
 	return 0;
 }
 
 int QualityMeasures::getWeightMapImage(Mat& weight_map)
 {
-	const Mat& C = this->getContrast();
-	const Mat& S = this->getSaturation();
+	const Mat& C = this->getContrast();          // uint8
+	const Mat& S = this->getSaturation();        // float32
+	const Mat& E = this->getWellExposureness();  // float32
 
 	float pix = 0.0f;
 
 	// float
-	weight_map.create(C.size(), CV_32SC1);
+	weight_map = Mat::zeros(C.size(), CV_32FC1);
 	for (int y = 0; y < C.rows; y++)
 	{
 		for (int x = 0; x < C.cols; x++)
 		{
-			pix = float(C.at<uchar>(y, x) * S.at<uchar>(y, x));
-			weight_map.at<int>(y, x) = int(pix);
+			const uchar& C_weight = C.at<uchar>(y, x);
+			const float& S_weight = S.at<float>(y, x);
+			const float& E_weight = E.at<float>(y, x);
+			pix = float(C_weight) * S_weight * E_weight + float(1e-12);
+			weight_map.at<float>(y, x) = pix;
 		}
 	}
 
