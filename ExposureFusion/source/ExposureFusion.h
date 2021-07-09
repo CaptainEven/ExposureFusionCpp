@@ -25,6 +25,8 @@ using namespace std;
 #define BLOCKROWS 32
 #define BLOCKCOLS 24
 
+#define CLAMP(value, minValue, maxValue) ((value)<(minValue)?(minValue):((value)>(maxValue)?(maxValue):(value)))
+
 
 class QualityMeasures
 {

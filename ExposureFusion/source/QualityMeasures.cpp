@@ -78,18 +78,11 @@ int QualityMeasures::getWellExposednessMeasure(const Mat& src, Mat& well_exposur
 	}
 
 	well_exposure = Mat::zeros(src.size(), CV_32FC1);
-
-	float new_pix_val = 0;
-	float gauss_weight = 0;
-
 	for (int y = 0; y < src.rows; y++)
 	{
 		for (int x = 0; x < src.cols; x++)
 		{
-
-			gauss_weight = (float)GAUSS_WEIGHT[src.at<uchar>(y, x)];
-			new_pix_val = gauss_weight * (float)src.at<uchar>(y, x);
-			well_exposure.at<float>(y, x) = new_pix_val;
+			well_exposure.at<float>(y, x) = (float)GAUSS_WEIGHT[src.at<uchar>(y, x)] * (float)src.at<uchar>(y, x);
 		}
 	}
 
