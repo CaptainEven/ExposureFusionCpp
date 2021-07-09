@@ -93,7 +93,7 @@ int main()
 	const char* seq_path = "./data";
 	const char* res_path = "./res";
 
-	// ---------- TODO: convert the for loop to multi-thread task
+	// ---------- multi-thread task
 	// Get sub-dirs
 	vector<string> dir_names;
 	int ret = getDirs("./data", dir_names);
@@ -119,6 +119,7 @@ int main()
 		}
 		dirs.insert(dirs.begin(), dir_names.begin() + i*stride, dir_names.begin() + (i+1) * stride);
 
+		// Launch threads
 		threads[i] = thread(thread_func, dirs, res_path);
 	}
 
@@ -133,11 +134,3 @@ int main()
 
 	return 0;
 }
-
-
-//sprintf(res_f_path, "%s\\EF_%d.bmp", res_path, i);
-//if (!EF.saveImageBMP(res_f_path))
-//{
-//	cout << "fail to save result image" << endl;
-//	return -1;
-//}
