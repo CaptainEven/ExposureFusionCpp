@@ -85,7 +85,7 @@ int thread_func(const vector<string>& dirs, const string& res_dir, const int& th
 	return 0;
 }
 
-// TODO: cmd line tool in Windows and Linux
+// CMD line tool in Windows and Linux
 int main(int argc, char** argv)
 {
 	if (argc < 4)
