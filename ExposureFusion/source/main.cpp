@@ -106,8 +106,8 @@ int main(int argc, char** argv)
 	time_t tok, tic = clock();
 
 	const uint N_THREADS = MIN(uint(atoi(argv[3])), thread::hardware_concurrency());
-	const int stride = (int)dir_names.size() / N_THREADS;
-	const int n_extra = (int)dir_names.size() % N_THREADS;
+	const uint stride = (uint)dir_names.size() / N_THREADS;
+	const uint n_extra = (uint)dir_names.size() % N_THREADS;
 
 	vector<thread> threads(N_THREADS);
 	for (uint i = 0; i < N_THREADS; ++i)
