@@ -105,7 +105,10 @@ int main(int argc, char** argv)
 	cout << "\n";
 	time_t tok, tic = clock();
 
-	const uint N_THREADS = MIN(uint(atoi(argv[3])), thread::hardware_concurrency());
+	const uint in_nthreads = uint(atoi(argv[3]));
+	assert(in_nthreads > 0);
+
+	const uint N_THREADS = MIN(in_nthreads, thread::hardware_concurrency());
 	const uint stride = (uint)dir_names.size() / N_THREADS;
 	const uint n_extra = (uint)dir_names.size() % N_THREADS;
 
