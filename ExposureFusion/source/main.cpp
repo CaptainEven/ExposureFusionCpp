@@ -1,5 +1,4 @@
 #define _CRT_SECURE_NO_WARNINGS
-#define WIN32
 
 
 #include<thread>
@@ -9,7 +8,7 @@ using namespace std;
 using namespace cv;
 
 
-#define N_THREADS 4
+#define N_THREADS 4  // number of threads
 
 
 void splitStr(const string& s, vector<string>& tokens, const char& delim = ' ')
@@ -50,7 +49,7 @@ int getDirs(const string& path, vector<string>& dirs)
 }
 
 
-int thread_func(const vector<string>& dirs, const string& res_dir)
+int thread_func(const vector<string>& dirs, const string& res_dir, const int& th_id)
 {
 	if (dirs.size() == 0)
 	{
@@ -60,6 +59,8 @@ int thread_func(const vector<string>& dirs, const string& res_dir)
 	for (int i = 0; i < int(dirs.size()); i++)
 	{
 		const string& dir_path = dirs[i];
+		cout << "Pocessing " << dir_path << "..." << endl;
+
 		ExposureFusion EF(dir_path.c_str(), false);
 		if (EF.getState() < 0)
 		{
@@ -67,9 +68,9 @@ int thread_func(const vector<string>& dirs, const string& res_dir)
 		}
 
 		EF.qualityMeasuresProcessing();
-		cout << "finish to qualityMeasuresProcessing" << endl;
+		//cout << "finish to qualityMeasuresProcessing" << endl;
 		EF.fuse();
-		cout << "finish to fuse" << endl;
+		//cout << "finish to fuse" << endl;
 		// ----------
 
 		// Save fused image
@@ -81,17 +82,22 @@ int thread_func(const vector<string>& dirs, const string& res_dir)
 		cv::imwrite(res_f_path, EF.getResultImage());
 
 		printf("%s saved.\n", res_f_path);
-		printf("End processing seq %d.\n\n", i);
+		cout << dir_path << " processed in thread#" << th_id << "\n\n";
 	}
 
 	return 0;
 }
 
 // TODO: cmd line tool in Windows and Linux
-int main()
+int main(int argc, char** argv)
 {
-	const char* seq_path = "./data";
-	const char* res_path = "./res";
+	if (argc < 3)
+	{
+		cout << "[Usage]: input_dir output_dir" << endl;
+		exit(-1);
+	}
+	const char* seq_path = argv[1];
+	const char* res_path = argv[2];
 
 	// ---------- multi-thread task
 	// Get sub-dirs
@@ -109,18 +115,24 @@ int main()
 	for (int i = 0; i < N_THREADS; ++i)
 	{	
 		vector<string> dirs;
-		if (i == N_THREADS - 1)
+		if (i == 0)
 		{
 			dirs.reserve(stride + n_extra);
+			dirs.insert(dirs.begin(),
+				dir_names.begin() + i * stride,
+				dir_names.begin() + (i + 1) * stride + n_extra);
 		}
 		else
 		{
 			dirs.reserve(stride);
+			dirs.insert(dirs.begin(), 
+				dir_names.begin() + i * stride + n_extra,
+				dir_names.begin() + (i + 1) * stride + n_extra);
 		}
-		dirs.insert(dirs.begin(), dir_names.begin() + i*stride, dir_names.begin() + (i+1) * stride);
 
 		// Launch threads
-		threads[i] = thread(thread_func, dirs, res_path);
+		cout << "\nLaunching thread#" << i << " for " << dirs.size() << "sub-dirs.\n";
+		threads[i] = thread(thread_func, dirs, res_path, i);
 	}
 
 	for (auto& th : threads)
@@ -129,7 +141,7 @@ int main()
 	}
 
 	tok = clock();
-	cout << "total processing time : "
+	cout << "\nTotal processing time : "
 		<< (float)(tok - tic) / CLOCKS_PER_SEC << "s" << endl;
 
 	return 0;

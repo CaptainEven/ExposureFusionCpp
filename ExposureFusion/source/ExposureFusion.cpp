@@ -16,11 +16,7 @@ ExposureFusion::ExposureFusion(const char* seq_path, const bool do_resize)
 	N_files = this->getFilesFormat(seq_path, format, img_paths);
 	this->m_nframes = (int)img_paths.size();
 
-	if (this->m_nframes > 0)
-	{
-		printf("Total %d image files.\n", this->m_nframes);
-	}
-	else
+	if (this->m_nframes == 0)
 	{
 		printf("[Warning]: non valid images found!\n");
 		this->m_state = -1;  // set state
@@ -75,7 +71,7 @@ ExposureFusion::ExposureFusion(const char* seq_path, const bool do_resize)
 		this->m_imgs_gray[fr_i] = img_gray;
 	}
 
-	std::cout << "finish to read Image Sequence " << endl;
+	//std::cout << "finish to read Image Sequence " << endl;
 }
 
 
