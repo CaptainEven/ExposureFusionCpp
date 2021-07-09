@@ -90,7 +90,7 @@ int main(int argc, char** argv)
 {
 	if (argc < 4)
 	{
-		cout << "[Usage]: input_dir output_dir n_threads" << endl;
+		cout << "[Usage]: input_dir(string) output_dir(string) n_threads(int)" << endl;
 		exit(-1);
 	}
 	const char* seq_path = argv[1];
