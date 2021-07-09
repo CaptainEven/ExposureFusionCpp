@@ -109,11 +109,11 @@ int main(int argc, char** argv)
 
 	vector<thread> threads(N_THREADS);
 
-	// Split task array for each thread
 	const int stride = (int)dir_names.size() / N_THREADS;
 	const int n_extra = (int)dir_names.size() % N_THREADS;
 	for (int i = 0; i < N_THREADS; ++i)
 	{	
+		// Split task
 		vector<string> dirs;
 		if (i == 0)
 		{
