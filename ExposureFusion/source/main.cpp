@@ -105,10 +105,10 @@ int main(int argc, char** argv)
 	cout << "\n";
 	time_t tok, tic = clock();
 
-	vector<thread> threads(N_THREADS);
-
 	const int stride = (int)dir_names.size() / N_THREADS;
 	const int n_extra = (int)dir_names.size() % N_THREADS;
+
+	vector<thread> threads(N_THREADS);
 	for (int i = 0; i < N_THREADS; ++i)
 	{	
 		// Split task
@@ -139,7 +139,7 @@ int main(int argc, char** argv)
 	}
 
 	tok = clock();
-	cout << "\nTotal processing time : "
+	cout << "\nTotal processing time: "
 		<< (float)(tok - tic) / CLOCKS_PER_SEC << "s" << endl;
 
 	return 0;
