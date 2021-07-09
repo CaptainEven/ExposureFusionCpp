@@ -209,7 +209,7 @@ int ExposureFusion::setResultByPyramid(const int ch, Mat& channel)
 		uchar_map.release();
 	}
 
-	cout << "Computing Laplace image pyramid " << endl << "Set gaussian weight map pyramid" << endl;
+	//cout << "Computing Laplace image pyramid " << endl << "Set gaussian weight map pyramid" << endl;
 	for (int l = 0; l < pyr_max_level; ++l)  // process each level
 	{
 		//cout << "pyramid depth: " << l << endl;
@@ -251,7 +251,7 @@ int ExposureFusion::setResultByPyramid(const int ch, Mat& channel)
 	fused_pyramid.push_back(lap_result.clone());
 
 	// Set result: fusing
-	cout << "Fusing pyramid" << endl;
+	//cout << "Fusing pyramid" << endl;
 	int i_pix = 0;
 	const Mat& temp = fused_pyramid[pyr_max_level];
 	const Mat& fused_lap_img = fused_pyramid[pyr_max_level - 1];

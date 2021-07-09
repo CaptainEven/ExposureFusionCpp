@@ -77,11 +77,10 @@ int thread_func(const vector<string>& dirs, const string& res_dir, const int& th
 		vector<string> tokens;
 		splitStr(dir_path, tokens, '/');
 		char res_f_path[100];
-		const auto& dir_id = tokens[2].c_str();
-		sprintf(res_f_path, "%s/EF_%d.jpg", res_dir.c_str(), atoi(dir_id));
+		const auto& dir_name = tokens[2].c_str();
+		sprintf(res_f_path, "%s/EF_%s.jpg", res_dir.c_str(), dir_name);
 		cv::imwrite(res_f_path, EF.getResultImage());
-
-		printf("%s saved.\n", res_f_path);
+		//printf("%s saved.\n", res_f_path);
 		cout << dir_path << " processed in thread#" << th_id << "\n\n";
 	}
 
@@ -102,9 +101,10 @@ int main(int argc, char** argv)
 	// ---------- multi-thread task
 	// Get sub-dirs
 	vector<string> dir_names;
-	int ret = getDirs("./data", dir_names);
+	int ret = getDirs(seq_path, dir_names);
 	const int n_dirs = int(dir_names.size());
 
+	cout << "\n";
 	time_t tok, tic = clock();
 
 	vector<thread> threads(N_THREADS);
