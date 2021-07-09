@@ -105,33 +105,33 @@ int main(int argc, char** argv)
 	cout << "\n";
 	time_t tok, tic = clock();
 
-	const int N_THREADS = MIN(atoi(argv[3]), thread::hardware_concurrency());
+	const uint N_THREADS = MIN(uint(atoi(argv[3])), thread::hardware_concurrency());
 	const int stride = (int)dir_names.size() / N_THREADS;
 	const int n_extra = (int)dir_names.size() % N_THREADS;
 
 	vector<thread> threads(N_THREADS);
-	for (int i = 0; i < N_THREADS; ++i)
+	for (uint i = 0; i < N_THREADS; ++i)
 	{	
 		// Split task
-		vector<string> dirs;
+		vector<string> thread_dirs;
 		if (i == 0)
 		{
-			dirs.reserve(stride + n_extra);
-			dirs.insert(dirs.begin(),
+			thread_dirs.reserve(stride + n_extra);
+			thread_dirs.insert(thread_dirs.begin(),
 				dir_names.begin() + i * stride,
 				dir_names.begin() + (i + 1) * stride + n_extra);
 		}
 		else
 		{
-			dirs.reserve(stride);
-			dirs.insert(dirs.begin(), 
+			thread_dirs.reserve(stride);
+			thread_dirs.insert(thread_dirs.begin(), 
 				dir_names.begin() + i * stride + n_extra,
 				dir_names.begin() + (i + 1) * stride + n_extra);
 		}
 
 		// Launch threads
-		cout << "\nLaunching thread#" << i << " for " << dirs.size() << "sub-dirs.\n";
-		threads[i] = thread(thread_func, dirs, res_path, i);
+		cout << "\nLaunching thread#" << i << " for " << thread_dirs.size() << "sub-dirs.\n";
+		threads[i] = thread(thread_func, thread_dirs, res_path, i);
 	}
 
 	for (auto& th : threads)
