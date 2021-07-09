@@ -61,6 +61,7 @@ int thread_func(const vector<string>& dirs, const string& res_dir, const int& th
 		const string& dir_path = dirs[i];
 		cout << "Pocessing " << dir_path << "..." << endl;
 
+		// ----------
 		ExposureFusion EF(dir_path.c_str(), false);
 		if (EF.getState() < 0)
 		{
@@ -75,7 +76,7 @@ int thread_func(const vector<string>& dirs, const string& res_dir, const int& th
 		vector<string> tokens;
 		splitStr(dir_path, tokens, '/');
 		char res_f_path[100];
-		const auto& dir_name = tokens[2].c_str();
+		const auto& dir_name = tokens[tokens.size() - 1].c_str();
 		sprintf(res_f_path, "%s/EF_%s.jpg", res_dir.c_str(), dir_name);
 		cv::imwrite(res_f_path, EF.getResultImage());
 		//cout << res_f_path << " saved.\n";
