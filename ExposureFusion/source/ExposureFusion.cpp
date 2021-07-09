@@ -27,15 +27,20 @@ ExposureFusion::ExposureFusion(const char* seq_path, const bool do_resize)
 		std::exit(-1);
 	}
 
-	// 预先分配内存
-	this->m_imgs_color.reserve(this->m_nframes);
-	this->m_imgs_gray.reserve(this->m_nframes);
-
-	for (int n = 0; n < m_nframes; n++)
+	for (int fr_i = 0; fr_i < m_nframes; fr_i++)
 	{
-		Mat input_img = cv::imread(img_paths[n], IMREAD_UNCHANGED);
+		Mat img_color = cv::imread(img_paths[fr_i], IMREAD_UNCHANGED);
+		if (fr_i == 0)
+		{
+			this->m_rows = img_color.rows;
+			this->m_cols = img_color.cols;
 
-		if (!input_img.data)
+			// Initialize m_imgs_color and m_imgs_gray
+			this->m_imgs_color = vector<Mat>(m_nframes, Mat::zeros(m_rows, m_cols, CV_8UC3));
+			this->m_imgs_gray = vector<Mat>(m_nframes, Mat::zeros(m_rows, m_cols, CV_8UC1));
+		}
+
+		if (!img_color.data)
 		{
 			printf("[Err]: Failed to read in image!\n");
 			std::exit(-1);
@@ -44,60 +49,35 @@ ExposureFusion::ExposureFusion(const char* seq_path, const bool do_resize)
 		// Resize for show convenience
 		if (do_resize)
 		{
-			if (input_img.rows > 1000)
+			if (img_color.rows > 1000)
 			{
 				do
 				{
-					Size sz(int(input_img.cols*0.5f), int(input_img.rows*0.5f));
-					if ((int)(input_img.cols*0.5f) % BLOCKCOLS == 0 || (int)(input_img.rows*0.5f) % BLOCKROWS == 0)
+					Size sz(int(img_color.cols*0.5f), int(img_color.rows*0.5f));
+					if ((int)(img_color.cols*0.5f) % BLOCKCOLS == 0 || (int)(img_color.rows*0.5f) % BLOCKROWS == 0)
 					{
-						sz = Size(int(input_img.cols*0.5 + 1), int(input_img.cols*0.5 + 1));
+						sz = Size(int(img_color.cols*0.5 + 1), int(img_color.cols*0.5 + 1));
 					}
 
 					// do resizing 
-					cv::resize(input_img, input_img, sz, 0.0, 0.0, cv::INTER_CUBIC);
+					cv::resize(img_color, img_color, sz, 0.0, 0.0, cv::INTER_CUBIC);
 
-				} while (input_img.rows > 1000);
+				} while (img_color.rows > 1000);
 			}
 		}
 
-		Mat gray(input_img.size(), CV_8UC1);
-		cv::cvtColor(input_img, gray, CV_BGR2GRAY);
-		this->m_imgs_color.push_back(input_img);
-		this->m_imgs_gray.push_back(gray);
+		// Get gray image
+		Mat img_gray(img_color.size(), CV_8UC1);
+		cv::cvtColor(img_color, img_gray, CV_BGR2GRAY);
+
+		// Push color and gray image
+		this->m_imgs_color[fr_i] = img_color;
+		this->m_imgs_gray[fr_i] = img_gray;
 	}
 
 	std::cout << "finish to read Image Sequence " << endl;
 }
 
-
-const int ExposureFusion::getFilesFormat(const string & path, const string & format, vector<string>& files)
-{
-	intptr_t hFile = 0;  // 文件句柄  64位下long 改为 intptr_t
-	struct _finddata_t fileinfo;  // 文件信息 
-	string p;
-	if ((hFile = _findfirst(p.assign(path).append("\\*" + format).c_str(), &fileinfo)) != -1)  // 文件存在
-	{
-		do
-		{
-			if ((fileinfo.attrib & _A_SUBDIR))  // 判断是否为文件夹
-			{
-				if (strcmp(fileinfo.name, ".") != 0 && strcmp(fileinfo.name, "..") != 0)  // 文件夹名中不含"."和".."
-				{
-					files.push_back(p.assign(path).append("\\").append(fileinfo.name));  // 保存文件夹名
-					this->getFilesFormat(p.assign(path).append("\\").append(fileinfo.name), format, files);  // 递归遍历文件夹
-				}
-			}
-			else
-			{
-				files.push_back(p.assign(path).append("\\").append(fileinfo.name));  // 如果不是文件夹，储存文件名
-			}
-		} while (_findnext(hFile, &fileinfo) == 0);
-		_findclose(hFile);
-	}
-
-	return int(files.size());
-}
 
 
 void ExposureFusion::qualityMeasuresProcessing()
@@ -235,7 +215,7 @@ int ExposureFusion::setResultByPyramid(const int ch, Mat& channel)
 		uchar_map.release();
 	}
 
-	cout << "Set Laplace image pyramid " << endl << "Set gaussian weight map pyramid" << endl;
+	cout << "Computing Laplace image pyramid " << endl << "Set gaussian weight map pyramid" << endl;
 	for (int l = 0; l < pyr_max_level; ++l)  // process each level
 	{
 		//cout << "pyramid depth: " << l << endl;
@@ -277,7 +257,7 @@ int ExposureFusion::setResultByPyramid(const int ch, Mat& channel)
 	fused_pyramid.push_back(lap_result.clone());
 
 	// Set result: fusing
-	cout << "Set fused pyramid" << endl;
+	cout << "Fusing pyramid" << endl;
 	int i_pix = 0;
 	const Mat& temp = fused_pyramid[pyr_max_level];
 	const Mat& fused_lap_img = fused_pyramid[pyr_max_level - 1];
@@ -318,6 +298,36 @@ int ExposureFusion::setResultByPyramid(const int ch, Mat& channel)
 
 	return 0;
 }
+
+
+const int ExposureFusion::getFilesFormat(const string & path, const string & format, vector<string>& files)
+{
+	intptr_t hFile = 0;  // 文件句柄  64位下long 改为 intptr_t
+	struct _finddata_t fileinfo;  // 文件信息 
+	string p;
+	if ((hFile = _findfirst(p.assign(path).append("\\*" + format).c_str(), &fileinfo)) != -1)  // 文件存在
+	{
+		do
+		{
+			if ((fileinfo.attrib & _A_SUBDIR))  // 判断是否为文件夹
+			{
+				if (strcmp(fileinfo.name, ".") != 0 && strcmp(fileinfo.name, "..") != 0)  // 文件夹名中不含"."和".."
+				{
+					files.push_back(p.assign(path).append("\\").append(fileinfo.name));  // 保存文件夹名
+					this->getFilesFormat(p.assign(path).append("\\").append(fileinfo.name), format, files);  // 递归遍历文件夹
+				}
+			}
+			else
+			{
+				files.push_back(p.assign(path).append("\\").append(fileinfo.name));  // 如果不是文件夹，储存文件名
+			}
+		} while (_findnext(hFile, &fileinfo) == 0);
+		_findclose(hFile);
+	}
+
+	return int(files.size());
+}
+
 
 bool ExposureFusion::saveImageBMP(const char* file_path)
 {

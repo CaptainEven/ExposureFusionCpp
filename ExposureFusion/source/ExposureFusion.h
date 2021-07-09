@@ -1,4 +1,6 @@
-#pragma once
+#ifndef EXPOSURE_FUSION
+#define EXPOSURE_FUSION
+
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <iostream>
@@ -97,25 +99,28 @@ private:
 	int m_nframes;
 	int m_state;
 
+	int m_rows;
+	int m_cols;
 
 public:
 	// 构造函数
 	ExposureFusion(const char* seq_path, const bool do_resize);
 
-	//获取特定格式的文件名    
-	const int getFilesFormat(const string& path, const string& format, vector<string>& files);
-
+	// ----- 处理函数
 	void qualityMeasuresProcessing(void);
-	// m_nframes weight map;
-
-	// 处理过程
-	bool saveImageBMP(const char* filename);
 
 	void fuse(void);
 
 	void setNormalizedWeightMaps();
 
 	int setResultByPyramid(const int nch, Mat& channel);
+	// -----
+
+	//获取特定格式的文件名    
+	const int getFilesFormat(const string& path, const string& format, vector<string>& files);
+
+	// 存位图
+	bool saveImageBMP(const char* filename);
 
 	// 返回查询结果
 	inline const cv::Mat& getResultImage()
@@ -133,3 +138,5 @@ public:
 		return this->m_state;
 	}
 };
+
+#endif
