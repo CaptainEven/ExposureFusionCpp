@@ -137,7 +137,6 @@ void ExposureFusion::setNormalizedWeightMaps()
 			for (int x = 0; x < cols; x++)
 			{
 				sum_pix = 0.0f;
-
 				for (int j = 0; j < nframes; j++)
 				{
 					sum_pix += this->m_weightMaps[j].at<float>(y, x);
@@ -298,7 +297,7 @@ int ExposureFusion::setResultByPyramid(const int ch, Mat& channel)
 }
 
 
-const int ExposureFusion::getFilesFormat(const string & path, const string & format, vector<string>& files)
+const int ExposureFusion::getFilesFormat(const string& path, const string& format, vector<string>& files)
 {
 	intptr_t hFile = 0;  // 文件句柄  64位下long 改为 intptr_t
 	struct _finddata_t fileinfo;  // 文件信息 
