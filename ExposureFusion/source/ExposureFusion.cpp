@@ -79,7 +79,6 @@ ExposureFusion::ExposureFusion(const char* seq_path, const bool do_resize)
 }
 
 
-
 void ExposureFusion::qualityMeasuresProcessing()
 {
 	// Initialize m_weightMaps
@@ -263,7 +262,6 @@ int ExposureFusion::setResultByPyramid(const int ch, Mat& channel)
 	const Mat& fused_lap_img = fused_pyramid[pyr_max_level - 1];
 	const int& rows = fused_lap_img.rows;
 	const int& cols = fused_lap_img.cols;
-
 
 	Mat temp_up;
 	cv::pyrUp(temp, temp_up, fused_lap_img.size());
