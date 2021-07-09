@@ -18,7 +18,7 @@ ExposureFusion::ExposureFusion(const char* seq_path, const bool do_resize)
 
 	if (this->m_nframes == 0)
 	{
-		printf("[Warning]: non valid images found!\n");
+		cout << "[Warning]: non valid images found!\n";
 		this->m_state = -1;  // set state
 		std::exit(-1);
 	}

@@ -68,9 +68,7 @@ int thread_func(const vector<string>& dirs, const string& res_dir, const int& th
 		}
 
 		EF.qualityMeasuresProcessing();
-		//cout << "finish to qualityMeasuresProcessing" << endl;
 		EF.fuse();
-		//cout << "finish to fuse" << endl;
 		// ----------
 
 		// Save fused image
@@ -80,7 +78,7 @@ int thread_func(const vector<string>& dirs, const string& res_dir, const int& th
 		const auto& dir_name = tokens[2].c_str();
 		sprintf(res_f_path, "%s/EF_%s.jpg", res_dir.c_str(), dir_name);
 		cv::imwrite(res_f_path, EF.getResultImage());
-		//printf("%s saved.\n", res_f_path);
+		//cout << res_f_path << " saved.\n";
 		cout << dir_path << " processed in thread#" << th_id << "\n\n";
 	}
 
