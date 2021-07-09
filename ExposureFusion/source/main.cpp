@@ -8,7 +8,7 @@ using namespace std;
 using namespace cv;
 
 
-#define N_THREADS 4  // number of threads
+//#define N_THREADS 4  // number of threads
 
 
 void splitStr(const string& s, vector<string>& tokens, const char& delim = ' ')
@@ -88,9 +88,9 @@ int thread_func(const vector<string>& dirs, const string& res_dir, const int& th
 // TODO: cmd line tool in Windows and Linux
 int main(int argc, char** argv)
 {
-	if (argc < 3)
+	if (argc < 4)
 	{
-		cout << "[Usage]: input_dir output_dir" << endl;
+		cout << "[Usage]: input_dir output_dir n_threads" << endl;
 		exit(-1);
 	}
 	const char* seq_path = argv[1];
@@ -105,6 +105,7 @@ int main(int argc, char** argv)
 	cout << "\n";
 	time_t tok, tic = clock();
 
+	const int N_THREADS = MIN(atoi(argv[3]), thread::hardware_concurrency());
 	const int stride = (int)dir_names.size() / N_THREADS;
 	const int n_extra = (int)dir_names.size() % N_THREADS;
 
