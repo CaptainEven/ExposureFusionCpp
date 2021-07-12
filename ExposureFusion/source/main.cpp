@@ -116,7 +116,7 @@ int thread_func(const vector<string>& dirs, const string& res_dir, const int& th
 
 		// Save fused image
 		vector<string> tokens;
-		splitStr(dir_path, tokens, '/');
+		splitStr(dir_path, tokens, '/');  // split to get dir name
 		char res_f_path[100];
 		const auto& dir_name = tokens[tokens.size() - 1].c_str();
 		sprintf(res_f_path, "%s/EF_%s.jpg", res_dir.c_str(), dir_name);
@@ -177,7 +177,6 @@ int main(int argc, char** argv)
 
 		// Launch threads
 		cout << "\nLaunching thread#" << i << " for " << thread_dirs.size() << "sub-dirs.\n";
-
 		threads[i] = thread(thread_func, thread_dirs, res_path, i);
 	}
 
