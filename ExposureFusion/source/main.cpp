@@ -176,7 +176,7 @@ int main(int argc, char** argv)
 		}
 
 		// Launch threads
-		cout << "\nLaunching thread#" << i << " for " << thread_dirs.size() << "sub-dirs.\n";
+		cout << "\nLaunching Thread#" << i << " for " << thread_dirs.size() << "sub-dirs.\n";
 		threads[i] = thread(thread_func, thread_dirs, res_path, i);
 	}
 
