@@ -56,12 +56,13 @@ int thread_func(const vector<string>& dirs, const string& res_dir, const int& th
 		return -1;
 	}
 
-	for (int i = 0; i < int(dirs.size()); i++)
+	const int& n_frames = int(dirs.size());
+	for (int i = 0; i < n_frames; i++)
 	{
 		const string& dir_path = dirs[i];
 		cout << "Pocessing " << dir_path << "..." << endl;
 
-		// ----------
+		// ---------- Processing
 		ExposureFusion EF(dir_path.c_str(), false);
 		if (EF.getState() < 0)
 		{
