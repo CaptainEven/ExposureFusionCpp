@@ -114,31 +114,30 @@ void ExposureFusion::fuse()
 
 void ExposureFusion::setNormalizedWeightMaps()
 {
-	const int& nframes = getnframes();
-	const int& rows = m_imgs_color[0].rows;
-	const int& cols = m_imgs_color[0].cols;
+	const int& n_frames = getnframes();
+	const int& rows = this->m_imgs_color[0].rows;
+	const int& cols = this->m_imgs_color[0].cols;
 
 	float sum_pix = 0.0f;
 
 	// Initialization of the weight map vector
-	this->m_normWeightMaps.resize(nframes, Mat::zeros(rows, cols, CV_32F));
+	this->m_normWeightMaps.resize(n_frames, Mat::zeros(rows, cols, CV_32F));
 
 	// Fill the vector of Mat
-	for (int i = 0; i < nframes; i++)
+	for (int i = 0; i < n_frames; i++)
 	{
-		Mat norm_weight_map = Mat::zeros(m_imgs_color[0].size(), CV_32FC1);
-
+		Mat norm_weight_map = Mat::zeros(this->m_imgs_color[0].size(), CV_32FC1);
 		for (int y = 0; y < rows; y++)
 		{
 			for (int x = 0; x < cols; x++)
 			{
 				sum_pix = 0.0f;
-				for (int j = 0; j < nframes; j++)
+				for (int j = 0; j < n_frames; j++)
 				{
 					sum_pix += this->m_weightMaps[j].at<float>(y, x);
 				}
 
-				norm_weight_map.at<float>(y, x) = m_weightMaps[i].at<float>(y, x) / sum_pix;
+				norm_weight_map.at<float>(y, x) = this->m_weightMaps[i].at<float>(y, x) / sum_pix;
 			}
 		}
 

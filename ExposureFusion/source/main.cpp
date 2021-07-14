@@ -14,13 +14,13 @@ using namespace cv;
 void splitStr(const string& s, vector<string>& tokens, const char& delim = ' ')
 {
 	tokens.clear();
-	size_t lastPos = s.find_first_not_of(delim, 0);
-	size_t pos = s.find(delim, lastPos);
-	while (lastPos != string::npos)
+	size_t last_pos = s.find_first_not_of(delim, 0);
+	size_t pos = s.find(delim, last_pos);
+	while (last_pos != string::npos)
 	{
-		tokens.emplace_back(s.substr(lastPos, pos - lastPos));
-		lastPos = s.find_first_not_of(delim, pos);
-		pos = s.find(delim, lastPos);
+		tokens.emplace_back(s.substr(last_pos, pos - last_pos));
+		last_pos = s.find_first_not_of(delim, pos);
+		pos = s.find(delim, last_pos);
 	}
 }
 
@@ -28,25 +28,26 @@ void splitStr(const string& s, vector<string>& tokens, const char& delim = ' ')
 int getDirs(const string& path, vector<string>& dirs)
 {
 	intptr_t hFile = 0;  // 文件句柄  64位下long 改为 intptr_t
-	struct _finddata_t fileinfo;  // 文件信息 
+	struct _finddata_t file_info;  // 文件信息 
 	string p;
-	if ((hFile = _findfirst(p.assign(path).append("/*").c_str(), &fileinfo)) != -1)  // 文件存在
+	if ((hFile = _findfirst(p.assign(path).append("/*").c_str(), &file_info)) != -1)  // 文件是否存在
 	{
 		do
 		{
-			if ((fileinfo.attrib & _A_SUBDIR))  // 判断是否为文件夹
+			if ((file_info.attrib & _A_SUBDIR))  // 判断是否为文件夹(目录)
 			{
-				if (strcmp(fileinfo.name, ".") != 0 && strcmp(fileinfo.name, "..") != 0)
+				if (strcmp(file_info.name, ".") != 0 && strcmp(file_info.name, "..") != 0)
 				{
-					dirs.push_back(p.assign(path).append("/").append(fileinfo.name));
+					dirs.push_back(p.assign(path).append("/").append(file_info.name));
 				}
 			}
-		} while (_findnext(hFile, &fileinfo) == 0);
+		} while (_findnext(hFile, &file_info) == 0);
 		_findclose(hFile);
 	}
 
 	return int(dirs.size());
 }
+
 
 int work(const vector<string>& dirs, const string& res_dir, 
 	const int start,
@@ -90,6 +91,7 @@ int work(const vector<string>& dirs, const string& res_dir,
 
 
 
+// The threading function
 int thread_func(const vector<string>& dirs, const string& res_dir, const int& th_id)
 {
 	if (dirs.size() == 0)
@@ -118,8 +120,8 @@ int thread_func(const vector<string>& dirs, const string& res_dir, const int& th
 		vector<string> tokens;
 		splitStr(dir_path, tokens, '/');  // split to get dir name
 		char res_f_path[100];
-		const auto& dir_name = tokens[tokens.size() - 1].c_str();
-		sprintf(res_f_path, "%s/EF_%s.jpg", res_dir.c_str(), dir_name);
+		const string& dir_name = tokens[tokens.size() - 1].c_str();
+		sprintf(res_f_path, "%s/EF_%s.jpg", res_dir.c_str(), dir_name.c_str());
 		cv::imwrite(res_f_path, EF.getResultImage());
 		//cout << res_f_path << " saved.\n";
 		cout << dir_path << " processed in thread#" << th_id << "\n\n";
@@ -138,6 +140,8 @@ int main(int argc, char** argv)
 	}
 	const char* seq_path = argv[1];
 	const char* res_path = argv[2];
+	const uint input_n_threads = uint(atoi(argv[3]));  // cmd input number of threads
+	assert(input_n_threads > 0);
 
 	// ---------- multi-thread task
 	// Get sub-dirs
@@ -147,18 +151,15 @@ int main(int argc, char** argv)
 
 	cout << "\n";
 	time_t tok, tic = clock();
-
-	const uint in_nthreads = uint(atoi(argv[3]));
-	assert(in_nthreads > 0);
-
-	const uint N_THREADS = MIN(in_nthreads, thread::hardware_concurrency());
+	
+	const uint N_THREADS = MIN(input_n_threads, thread::hardware_concurrency());
 	const uint stride = (uint)dir_names.size() / N_THREADS;
 	const uint n_extra = (uint)dir_names.size() % N_THREADS;
 
 	vector<thread> threads(N_THREADS);
 	for (uint i = 0; i < N_THREADS; ++i)
 	{	
-		// Split task
+		// Split the task into thrteads
 		vector<string> thread_dirs;
 		if (i == 0)
 		{
@@ -175,7 +176,7 @@ int main(int argc, char** argv)
 				dir_names.begin() + (i + 1) * stride + n_extra);
 		}
 
-		// Launch threads
+		// Launch the threads
 		cout << "\nLaunching Thread#" << i << " for " << thread_dirs.size() << "sub-dirs.\n";
 		threads[i] = thread(thread_func, thread_dirs, res_path, i);
 	}
